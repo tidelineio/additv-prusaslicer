@@ -197,6 +197,7 @@ public:
     bool        is_dlg_layout() const { return m_layout == ESettingsLayout::Dlg; }
 
     void        reslice_now();
+    void        open_additv_dialog();
     void        repair_stl();
     void        export_config();
     // Query user for the config file and open it.

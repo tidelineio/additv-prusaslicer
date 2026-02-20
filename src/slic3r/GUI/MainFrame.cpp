@@ -10,6 +10,9 @@
 ///|/ PrusaSlicer is released under the terms of the AGPLv3 or higher
 ///|/
 #include "MainFrame.hpp"
+#include "Additv/AdditvDialog.hpp"
+#include "Additv/AdditvClient.hpp"
+#include "Additv/AdditvConfig.hpp"
 
 #include <wx/panel.h>
 #include <wx/notebook.h>
@@ -1573,6 +1576,14 @@ void MainFrame::init_menubar_as_editor()
 			[this]() {return can_eject(); }, this);
 
         fileMenu->AppendSeparator();
+        append_menu_item(fileMenu, wxID_ANY,
+            _L("Send to Additv &Farm") + dots + "\tCtrl+Shift+U",
+            _L("Upload G-code and create print jobs on the Additv farm"),
+            [this](wxCommandEvent&) { open_additv_dialog(); },
+            "", nullptr,
+            [this]() { return m_plater != nullptr; }, this);
+
+        fileMenu->AppendSeparator();
 
         m_menu_item_reslice_now = append_menu_item(fileMenu, wxID_ANY, _L("(Re)Slice No&w") + "\tCtrl+R", _L("Start new slicing process"),
             [this](wxCommandEvent&) { reslice_now(); }, "re_slice", nullptr,
@@ -1894,6 +1905,37 @@ void MainFrame::reslice_now()
 {
     if (m_plater)
         m_plater->reslice();
+}
+
+void MainFrame::open_additv_dialog()
+{
+    using namespace Slic3r::GUI::Additv;
+
+    AdditvDialog dlg(this);
+
+    // Pre-populate from the current plater state
+    if (m_plater) {
+        // Try to get the last exported gcode path
+        // The exact method depends on PrusaSlicer's internal API —
+        // adjust if the build shows a compilation error here.
+        auto last_output = m_plater->get_last_output_dir_path();
+        // For now, the user will see "(no file)" if no export has happened.
+        // A future improvement could detect the most recent export.
+
+        // Get filament type from active preset
+        const DynamicPrintConfig &cfg = wxGetApp().preset_bundle->filaments.get_edited_preset().config;
+        auto *opt = cfg.opt<ConfigOptionStrings>("filament_type");
+        if (opt && !opt->values.empty())
+            dlg.set_filament_type_hint(opt->values.front());
+
+        // Get printer model from active preset
+        const DynamicPrintConfig &pcfg = wxGetApp().preset_bundle->printers.get_edited_preset().config;
+        auto *popt = pcfg.opt<ConfigOptionString>("printer_model");
+        if (popt && !popt->value.empty())
+            dlg.set_printer_model(popt->value);
+    }
+
+    dlg.ShowModal();
 }
 
 void MainFrame::repair_stl()

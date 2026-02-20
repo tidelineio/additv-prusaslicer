@@ -17,6 +17,14 @@ set(SLIC3R_GUI_SOURCES
     pchheader.hpp
     GUI/AboutDialog.cpp
     GUI/AboutDialog.hpp
+    GUI/Additv/AdditvClient.cpp
+    GUI/Additv/AdditvClient.hpp
+    GUI/Additv/AdditvConfig.cpp
+    GUI/Additv/AdditvConfig.hpp
+    GUI/Additv/AdditvDialog.cpp
+    GUI/Additv/AdditvDialog.hpp
+    GUI/Additv/AdditvOAuth.cpp
+    GUI/Additv/AdditvOAuth.hpp
     GUI/ArrangeSettingsDialogImgui.hpp
     GUI/ArrangeSettingsDialogImgui.cpp
     GUI/UserAccountCommunication.cpp
