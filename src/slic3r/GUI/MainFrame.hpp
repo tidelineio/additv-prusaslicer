@@ -197,8 +197,10 @@ public:
     bool        is_dlg_layout() const { return m_layout == ESettingsLayout::Dlg; }
 
     void        reslice_now();
-    void        open_additv_dialog();  // Shows Send to Farm dialog
-    void        additv_toggle_login(); // Login/logout from account menu
+    void        open_additv_dialog();     // Shows Send to Farm dialog
+    void        additv_toggle_login();   // Login/logout from account menu
+    void        additv_fetch_user_info();// Fetch email from OAuth userinfo
+    void        additv_validate_session();// Validate saved tokens on startup
     void        repair_stl();
     void        export_config();
     // Query user for the config file and open it.

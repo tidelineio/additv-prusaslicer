@@ -14,6 +14,11 @@
 #include "Additv/AdditvConfig.hpp"
 #include "Additv/AdditvOAuth.hpp"
 #include "Additv/AdditvClient.hpp"
+#include "slic3r/Utils/Http.hpp"
+
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
+#include <thread>
 
 #include <wx/panel.h>
 #include <wx/notebook.h>
@@ -220,6 +225,15 @@ DPIFrame(NULL, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, wxDEFAULT_FRAME_S
     wxToolTip::SetAutoPop(32767);
 
     m_loaded = true;
+
+    // Validate saved Additv session (runs in background to not block startup)
+    std::thread([this]() {
+        Slic3r::GUI::Additv::AdditvConfig cfg; // just to ensure the namespace is accessible
+        (void)cfg;
+        // Small delay to let the UI finish initializing
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        wxTheApp->CallAfter([this]() { additv_validate_session(); });
+    }).detach();
 
     // initialize layout
     m_main_sizer = new wxBoxSizer(wxVERTICAL);
@@ -1970,11 +1984,7 @@ void MainFrame::additv_toggle_login()
             if (result.success) {
                 Slic3r::GUI::Additv::AdditvConfig::set_access_token(result.access_token);
                 Slic3r::GUI::Additv::AdditvConfig::set_refresh_token(result.refresh_token);
-
-                Slic3r::GUI::Additv::UserInfo user;
-                std::string err;
-                if (Slic3r::GUI::Additv::AdditvClient::get_me(user, err))
-                    Slic3r::GUI::Additv::AdditvConfig::set_user_email(user.email);
+                additv_fetch_user_info();
             } else {
                 wxMessageBox(
                     wxString::Format(_L("Additv login failed: %s"), result.error),
@@ -1984,6 +1994,71 @@ void MainFrame::additv_toggle_login()
             update_topbars();
         });
     }).detach();
+}
+
+void MainFrame::additv_fetch_user_info()
+{
+    using namespace Slic3r::GUI::Additv;
+
+    // Call the Supabase OAuth userinfo endpoint to get the user's email
+    std::string base = AdditvConfig::get_server_url();
+    if (!base.empty() && base.back() == '/')
+        base.pop_back();
+    std::string url = base + "/auth/v1/oauth/userinfo";
+
+    std::string  resp_body;
+    unsigned     resp_status = 0;
+    std::string  error;
+
+    Http::get(url)
+        .header("Authorization", "Bearer " + AdditvConfig::get_access_token())
+        .on_complete([&](std::string body, unsigned status) {
+            resp_body   = std::move(body);
+            resp_status = status;
+        })
+        .on_error([&](std::string body, std::string err, unsigned status) {
+            resp_body   = std::move(body);
+            resp_status = status;
+            error       = std::move(err);
+        })
+        .perform_sync();
+
+    if (resp_status == 200) {
+        try {
+            boost::property_tree::ptree tree;
+            std::istringstream ss(resp_body);
+            boost::property_tree::read_json(ss, tree);
+            std::string email = tree.get<std::string>("email", "");
+            if (!email.empty())
+                AdditvConfig::set_user_email(email);
+        } catch (...) {}
+    }
+}
+
+void MainFrame::additv_validate_session()
+{
+    using namespace Slic3r::GUI::Additv;
+
+    if (!AdditvConfig::is_logged_in())
+        return;
+
+    // Try to fetch user info with the saved token
+    // If it fails, try refreshing the token
+    additv_fetch_user_info();
+
+    if (AdditvConfig::get_user_email().empty()) {
+        // Token might be expired — try refresh
+        std::string err;
+        if (AdditvClient::refresh_access_token(err)) {
+            additv_fetch_user_info();
+        } else {
+            // Refresh failed — clear stale tokens
+            AdditvConfig::clear_auth();
+        }
+    }
+
+    m_bar_menus.UpdateAccountMenu();
+    update_topbars();
 }
 
 void MainFrame::repair_stl()
