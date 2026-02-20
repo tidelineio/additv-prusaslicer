@@ -458,6 +458,9 @@ public:
     wxMenu* layer_menu();
     wxMenu* multi_selection_menu();
 
+    // Returns path to the temp gcode file from the last slice (empty if not sliced)
+    std::string get_temp_gcode_output_path() const;
+
 private:
     std::optional<fs_path> get_default_output_file();
     std::optional<wxString> check_output_path_has_error(const boost::filesystem::path& path) const;

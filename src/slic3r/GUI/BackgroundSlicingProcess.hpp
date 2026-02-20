@@ -89,6 +89,7 @@ public:
 	~BackgroundSlicingProcess();
 
 	void set_temp_output_path(int bed_idx);
+	const std::string& temp_output_path() const { return m_temp_output_path; }
 	void set_fff_print(Print* print) { if (m_fff_print != print) stop(); m_fff_print = print; }
     void set_sla_print(SLAPrint *print) { if (m_sla_print != print) stop(); m_sla_print = print; }
 	void set_thumbnail_cb(ThumbnailsGeneratorCallback cb) { m_thumbnail_cb = cb; }

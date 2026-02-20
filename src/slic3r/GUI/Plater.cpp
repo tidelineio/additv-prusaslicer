@@ -7718,6 +7718,11 @@ Plater::TakeSnapshot::TakeSnapshot(Plater* plater, const std::string& snapshot_n
 
 
 // Wrapper around wxWindow::PopupMenu to suppress error messages popping out while tracking the popup menu.
+std::string Plater::get_temp_gcode_output_path() const
+{
+    return p->background_process.temp_output_path();
+}
+
 bool Plater::PopupMenu(wxMenu *menu, const wxPoint& pos)
 {
 	// Don't want to wake up and trigger reslicing while tracking the pop-up menu.

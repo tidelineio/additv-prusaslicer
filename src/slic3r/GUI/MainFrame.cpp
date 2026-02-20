@@ -1923,6 +1923,11 @@ void MainFrame::open_additv_dialog()
 
     // Pre-populate from the current plater state
     if (m_plater) {
+        // Get the temp gcode file from the last slice
+        std::string gcode_path = m_plater->get_temp_gcode_output_path();
+        if (!gcode_path.empty())
+            dlg.set_gcode_path(gcode_path);
+
         // Get filament type from active preset
         const DynamicPrintConfig &cfg = wxGetApp().preset_bundle->filaments.get_edited_preset().config;
         auto *opt = cfg.opt<ConfigOptionStrings>("filament_type");
