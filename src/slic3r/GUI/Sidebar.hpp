@@ -84,6 +84,7 @@ class Sidebar : public wxPanel
     wxButton*       m_btn_connect_gcode         { nullptr };
     ScalableButton* m_btn_send_gcode            { nullptr };
     ScalableButton* m_btn_export_gcode_removable{ nullptr }; //exports to removable drives (appears only if removable drive is connected)
+    wxButton*       m_btn_additv_send           { nullptr }; // Send to Additv Farm
                                                              //
     wxButton* m_btn_export_all_gcode                { nullptr };
     wxButton* m_btn_connect_gcode_all               { nullptr };
@@ -137,6 +138,7 @@ public:
     bool show_send(bool show) const;
     bool show_export_removable(bool show) const;
     bool show_connect(bool show) const;
+    bool show_additv(bool show) const;
 
     void enable_bulk_buttons(bool enable);
     bool show_export_all(bool show) const;

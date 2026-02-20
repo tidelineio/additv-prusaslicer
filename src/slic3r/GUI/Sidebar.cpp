@@ -19,6 +19,7 @@
 ///|/
 #include "Sidebar.hpp"
 #include "FrequentlyChangedParameters.hpp"
+#include "MainFrame.hpp"
 #include "Plater.hpp"
 
 #include <cstddef>
@@ -499,6 +500,7 @@ Sidebar::Sidebar(Plater *parent)
     init_btn(&m_btn_export_gcode, _L("Export G-code") + dots , scaled_height);
     init_btn(&m_btn_reslice     , _L("Slice now")            , scaled_height);
     init_btn(&m_btn_connect_gcode, _L("Send to Connect"), scaled_height);
+    init_btn(&m_btn_additv_send, _L("Send to Additv"), scaled_height);
 
     enable_buttons(false);
 
@@ -512,6 +514,7 @@ Sidebar::Sidebar(Plater *parent)
 
     m_btns_sizer->Add(m_btn_reslice, 0, wxEXPAND | wxTOP, margin_5);
     m_btns_sizer->Add(complect_btns_sizer, 0, wxEXPAND | wxTOP, margin_5);
+    m_btns_sizer->Add(m_btn_additv_send, 0, wxEXPAND | wxTOP, margin_5);
 
     auto *sizer = new wxBoxSizer(wxVERTICAL);
     sizer->Add(m_scrolled_panel, 1, wxEXPAND);
@@ -543,6 +546,10 @@ Sidebar::Sidebar(Plater *parent)
 
     // Events
     m_btn_export_gcode->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { m_plater->export_gcode(false); });
+    m_btn_additv_send->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) {
+        if (auto *main_frame = dynamic_cast<MainFrame*>(wxGetApp().mainframe))
+            main_frame->open_additv_dialog();
+    });
     m_btn_reslice->Bind(wxEVT_BUTTON, [this](wxCommandEvent&)
     {
         if (m_plater->canvas3D()->get_gizmos_manager().is_in_editing_mode(true))
@@ -1190,6 +1197,12 @@ bool Sidebar::show_connect(bool show) const {
         return false;
     }
     return m_btn_connect_gcode->Show(show);
+}
+bool Sidebar::show_additv(bool show) const {
+    if (this->m_autoslicing_mode) {
+        return false;
+    }
+    return m_btn_additv_send->Show(show);
 }
 
 bool Sidebar::show_export_all(bool show) const {

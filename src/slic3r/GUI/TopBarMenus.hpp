@@ -61,6 +61,7 @@ public:
     wxBitmapBundle*     get_workspace_bitmap(/*ConfigOptionMode*/int mode = -1);
 
     UserAccountInfo     get_user_account_info();
+    bool                is_additv_logged() const { return m_cb_additv_is_logged ? m_cb_additv_is_logged() : false; }
 
     void set_workspaces_menu_callbacks(std::function</*ConfigOptionMode*/int()>             cb_get_mode,
                                        std::function<void(/*ConfigOptionMode*/int)>         cb_save_mode,

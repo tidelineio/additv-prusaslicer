@@ -211,7 +211,16 @@ void TopBarItemsCtrl::ButtonWithPopup::SetLabel(const wxString& label)
 void TopBarItemsCtrl::UpdateAccountButton(bool avatar/* = false*/)
 {
     TopBarMenus::UserAccountInfo  user_account = m_menus->get_user_account_info();
-    const wxString user_name = user_account.is_logged ? from_u8(user_account.user_name) : _L("Log in");
+
+    // Build label reflecting both Printables and Additv login state
+    wxString user_name;
+    if (user_account.is_logged)
+        user_name = from_u8(user_account.user_name);
+    else if (m_menus && m_menus->is_additv_logged())
+        user_name = _L("Additv");
+    else
+        user_name = _L("Log in");
+
     m_account_btn->SetToolTip(user_name);
     if (avatar) {
         if (user_account.is_logged) {
@@ -220,6 +229,9 @@ void TopBarItemsCtrl::UpdateAccountButton(bool avatar/* = false*/)
                 m_account_btn->SetBitmapBundle(new_logo.bmp());
             else
                 m_account_btn->SetBitmapBundle(*get_bmp_bundle("user", login_icon_sz));
+        }
+        else if (m_menus && m_menus->is_additv_logged()) {
+            m_account_btn->SetBitmapBundle(*get_bmp_bundle("additv", login_icon_sz));
         }
         else {
             m_account_btn->SetBitmapBundle(*get_bmp_bundle("user", login_icon_sz));
