@@ -1,6 +1,6 @@
 #include "AdditvClient.hpp"
 #include "AdditvConfig.hpp"
-#include "../Utils/Http.hpp"
+#include "slic3r/Utils/Http.hpp"
 
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/property_tree/ptree.hpp>

@@ -1,6 +1,6 @@
 #include "AdditvConfig.hpp"
 #include "libslic3r/AppConfig.hpp"
-#include "../GUI_App.hpp"
+#include "slic3r/GUI/GUI_App.hpp"
 
 namespace Slic3r { namespace GUI { namespace Additv {
 

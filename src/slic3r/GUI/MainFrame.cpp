@@ -1915,12 +1915,8 @@ void MainFrame::open_additv_dialog()
 
     // Pre-populate from the current plater state
     if (m_plater) {
-        // Try to get the last exported gcode path
-        // The exact method depends on PrusaSlicer's internal API —
-        // adjust if the build shows a compilation error here.
-        auto last_output = m_plater->get_last_output_dir_path();
-        // For now, the user will see "(no file)" if no export has happened.
-        // A future improvement could detect the most recent export.
+        // TODO: detect the last exported gcode path and call dlg.set_gcode_path()
+        // For now the user will see "(no file)" until we hook into the export flow.
 
         // Get filament type from active preset
         const DynamicPrintConfig &cfg = wxGetApp().preset_bundle->filaments.get_edited_preset().config;

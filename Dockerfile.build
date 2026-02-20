@@ -1,0 +1,80 @@
+# Build environment for PrusaSlicer with Additv integration
+# Usage:
+#   docker build -f Dockerfile.build -t additv-prusaslicer-build .
+#   docker run --rm -v $(pwd)/build-output:/output-mount additv-prusaslicer-build
+#
+# The deps layer is cached — rebuilds only recompile PrusaSlicer itself.
+
+FROM ubuntu:22.04 AS deps
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Fix UTF-8 locale (Boost zip contains non-ASCII filenames)
+RUN apt-get update && apt-get install -y --no-install-recommends locales \
+    && locale-gen en_US.UTF-8 \
+    && rm -rf /var/lib/apt/lists/*
+ENV LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
+
+# Ubuntu 22.04 ships cmake 3.22 which is in the safe range (<3.28).
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    autoconf \
+    automake \
+    build-essential \
+    cmake \
+    curl \
+    gettext \
+    git \
+    libtool \
+    libcurl4-openssl-dev \
+    libdbus-1-dev \
+    libegl-dev \
+    libgl-dev \
+    libglu1-mesa-dev \
+    libgtk-3-dev \
+    libssl-dev \
+    libudev-dev \
+    libwayland-dev \
+    libwebkit2gtk-4.0-dev \
+    libx11-dev \
+    libxkbcommon-dev \
+    m4 \
+    patchelf \
+    pkg-config \
+    unzip \
+    texinfo \
+    wget \
+    zlib1g-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy deps + cmake modules (deps CMakeLists references ../cmake/modules/)
+WORKDIR /src
+COPY deps/ deps/
+COPY cmake/ cmake/
+COPY CMakeLists.txt CMakePresets.json version.inc ./
+
+# Build dependencies (this is the slow step — cached in Docker layer)
+RUN mkdir deps/build && cd deps/build \
+    && cmake .. -DDEP_WX_GTK3=ON \
+    && make -j$(nproc)
+
+# --- Build PrusaSlicer ---
+FROM deps AS build
+
+# Copy the full source (changes to src/ invalidate only this layer)
+COPY . /src/
+
+# Build PrusaSlicer (PIPESTATUS ensures make's exit code propagates through tee)
+SHELL ["/bin/bash", "-c"]
+RUN mkdir -p /src/build && cd /src/build \
+    && cmake .. \
+       -DCMAKE_PREFIX_PATH=/src/deps/build/destdir/usr/local \
+       -DCMAKE_BUILD_TYPE=Release \
+       -DSLIC3R_STATIC=ON \
+       -DSLIC3R_GTK=3 \
+    && set -o pipefail \
+    && make -j$(nproc) 2>&1 | tee /tmp/build.log
+
+# Copy the built binary out
+RUN mkdir -p /output && cp /src/build/src/prusa-slicer /output/ 2>/dev/null || true
+
+CMD ["cp", "-r", "/output/.", "/output-mount/"]

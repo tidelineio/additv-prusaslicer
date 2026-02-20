@@ -1,6 +1,7 @@
 #include "AdditvDialog.hpp"
 #include "AdditvConfig.hpp"
 #include "AdditvOAuth.hpp"
+#include "slic3r/GUI/I18N.hpp"
 
 #include <wx/filename.h>
 #include <wx/msgdlg.h>

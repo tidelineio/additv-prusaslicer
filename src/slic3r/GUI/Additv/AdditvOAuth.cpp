@@ -1,6 +1,6 @@
 #include "AdditvOAuth.hpp"
 #include "AdditvConfig.hpp"
-#include "../Utils/Http.hpp"
+#include "slic3r/Utils/Http.hpp"
 
 #include <boost/asio.hpp>
 #include <boost/property_tree/json_parser.hpp>
