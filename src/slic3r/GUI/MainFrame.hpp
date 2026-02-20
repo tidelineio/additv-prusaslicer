@@ -45,7 +45,7 @@ class Plater;
 class MainFrame;
 class PreferencesDialog;
 class GalleryDialog;
-class ConnectWebViewPanel; 
+class ConnectWebViewPanel;
 class PrinterWebViewPanel;
 class PrintablesWebViewPanel;
 
@@ -197,7 +197,8 @@ public:
     bool        is_dlg_layout() const { return m_layout == ESettingsLayout::Dlg; }
 
     void        reslice_now();
-    void        open_additv_dialog();
+    void        open_additv_dialog();  // Shows Send to Farm dialog
+    void        additv_toggle_login(); // Login/logout from account menu
     void        repair_stl();
     void        export_config();
     // Query user for the config file and open it.

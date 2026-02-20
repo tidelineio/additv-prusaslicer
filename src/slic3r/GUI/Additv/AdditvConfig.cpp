@@ -20,6 +20,28 @@ void AdditvConfig::set_server_url(const std::string &url)
     app_cfg().set(SECTION, KEY_URL, url);
 }
 
+std::string AdditvConfig::get_client_id()
+{
+    std::string val = app_cfg().get(SECTION, KEY_CLIENT_ID);
+    return val.empty() ? DEFAULT_CLIENT_ID : val;
+}
+
+void AdditvConfig::set_client_id(const std::string &id)
+{
+    app_cfg().set(SECTION, KEY_CLIENT_ID, id);
+}
+
+std::string AdditvConfig::get_client_secret()
+{
+    std::string val = app_cfg().get(SECTION, KEY_CLIENT_SECRET);
+    return val.empty() ? DEFAULT_CLIENT_SECRET : val;
+}
+
+void AdditvConfig::set_client_secret(const std::string &secret)
+{
+    app_cfg().set(SECTION, KEY_CLIENT_SECRET, secret);
+}
+
 std::string AdditvConfig::get_access_token()
 {
     return app_cfg().get(SECTION, KEY_ACCESS);

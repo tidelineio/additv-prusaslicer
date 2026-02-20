@@ -233,20 +233,25 @@ AdditvOAuth::exchange_code(const std::string &code,
     std::string base = AdditvConfig::get_server_url();
     if (!base.empty() && base.back() == '/')
         base.pop_back();
-    std::string url = base + "/auth/v1/token?grant_type=pkce";
+    std::string url = base + "/auth/v1/oauth/token";
+    std::string client_id     = AdditvConfig::get_client_id();
+    std::string client_secret = AdditvConfig::get_client_secret();
 
-    std::ostringstream body;
-    body << "{\"code\":\"" << code
-         << "\",\"code_verifier\":\"" << code_verifier
-         << "\",\"redirect_uri\":\"" << redirect_uri
-         << "\"}";
+    // Standard OAuth 2.1 token exchange (form-encoded, not JSON)
+    std::string body_str =
+        "grant_type=authorization_code"
+        "&code="          + Http::url_encode(code) +
+        "&redirect_uri="  + Http::url_encode(redirect_uri) +
+        "&code_verifier=" + Http::url_encode(code_verifier) +
+        "&client_id="     + client_id;
 
     std::string resp_body;
     unsigned    resp_status = 0;
 
     Http::post(url)
-        .header("Content-Type", "application/json")
-        .set_post_body(body.str())
+        .header("Content-Type", "application/x-www-form-urlencoded")
+        .auth_basic(client_id, client_secret)
+        .set_post_body(body_str)
         .on_complete([&](std::string b, unsigned status) {
             resp_body   = std::move(b);
             resp_status = status;
@@ -296,29 +301,26 @@ AdditvOAuth::LoginResult AdditvOAuth::login(int timeout_seconds)
     if (code_challenge.empty())
         return {false, {}, {}, "Failed to compute PKCE challenge"};
 
-    // Step 2: Find a free port
-    int port = 0;
-    {
-        boost::asio::io_context io;
-        tcp::acceptor tmp(io, tcp::endpoint(tcp::v4(), 0));
-        port = tmp.local_endpoint().port();
-    }
+    // Step 2: Fixed port — must match the redirect_uri registered in Supabase
+    constexpr int port = 19284;
 
-    std::string redirect_uri =
-        "http://localhost:" + std::to_string(port) + "/callback";
+    std::string redirect_uri = "http://localhost:" + std::to_string(port);
 
-    // Step 3: Build auth URL
+    // Step 3: Build auth URL (Supabase OAuth 2.1 endpoint)
     std::string base = AdditvConfig::get_server_url();
     if (!base.empty() && base.back() == '/')
         base.pop_back();
+    std::string client_id = AdditvConfig::get_client_id();
 
     std::string auth_url =
-        base + "/auth/v1/authorize"
+        base + "/auth/v1/oauth/authorize"
         "?response_type=code"
-        "&code_challenge=" + Http::url_encode(code_challenge) +
+        "&client_id="              + client_id +
+        "&redirect_uri="           + Http::url_encode(redirect_uri) +
+        "&scope="                  + Http::url_encode("email profile") +
+        "&code_challenge="         + code_challenge +
         "&code_challenge_method=S256"
-        "&redirect_to="    + Http::url_encode(redirect_uri) +
-        "&state="          + Http::url_encode(state);
+        "&state="                  + state;
 
     // Step 4: Open browser and wait for callback
     open_browser(auth_url);

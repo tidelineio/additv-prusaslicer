@@ -11,8 +11,9 @@
 ///|/
 #include "MainFrame.hpp"
 #include "Additv/AdditvDialog.hpp"
-#include "Additv/AdditvClient.hpp"
 #include "Additv/AdditvConfig.hpp"
+#include "Additv/AdditvOAuth.hpp"
+#include "Additv/AdditvClient.hpp"
 
 #include <wx/panel.h>
 #include <wx/notebook.h>
@@ -664,6 +665,12 @@ void MainFrame::set_callbacks_for_topbar_menus()
     // we need "Hide Log in button" menu item only till "show_login_button" wasn't changed
     if (wxGetApp().app_config->has("show_login_button"))
         m_bar_menus.RemoveHideLoginItem();
+
+    // Additv login callbacks
+    m_bar_menus.set_additv_callbacks(
+        [this]() { additv_toggle_login(); },
+        []() -> bool { return Slic3r::GUI::Additv::AdditvConfig::is_logged_in(); }
+    );
 }
 
 void MainFrame::init_tabpanel()
@@ -810,7 +817,7 @@ void MainFrame::create_preset_tabs()
     
     m_printables_webview = new PrintablesWebViewPanel(m_tabpanel);
     add_printables_webview_tab();
-   
+
     m_connect_webview = new ConnectWebViewPanel(m_tabpanel);
     m_printer_webview = new PrinterWebViewPanel(m_tabpanel, L"");
    
@@ -1539,6 +1546,9 @@ void MainFrame::init_menubar_as_editor()
 		append_menu_item(export_menu, wxID_ANY, _L("Export G-code to SD Card / Flash Drive") + dots + "\tCtrl+U", _L("Export current plate as G-code to SD card / Flash drive"),
 			[this](wxCommandEvent&) { if (m_plater) m_plater->export_gcode(true); }, "export_to_sd", nullptr,
 			[this]() {return can_export_gcode_sd(); }, this);
+        append_menu_item(export_menu, wxID_ANY, _L("Send to Additv Farm") + dots + "\tCtrl+Shift+U", _L("Upload G-code and create print jobs on the Additv farm"),
+            [this](wxCommandEvent&) { open_additv_dialog(); }, "", nullptr,
+            [this]() { return m_plater != nullptr && can_export_gcode(); }, this);
         export_menu->AppendSeparator();
         append_menu_item(export_menu, wxID_ANY, _L("Export Plate as &STL/OBJ") + dots, _L("Export current plate as STL/OBJ"),
             [this](wxCommandEvent&) { if (m_plater) m_plater->export_stl_obj(); }, "export_plater", nullptr,
@@ -1574,14 +1584,6 @@ void MainFrame::init_menubar_as_editor()
 		append_menu_item(fileMenu, wxID_ANY, _L("Ejec&t SD Card / Flash Drive") + dots + "\tCtrl+T", _L("Eject SD card / Flash drive after the G-code was exported to it."),
 			[this](wxCommandEvent&) { if (m_plater) m_plater->eject_drive(); }, "eject_sd", nullptr,
 			[this]() {return can_eject(); }, this);
-
-        fileMenu->AppendSeparator();
-        append_menu_item(fileMenu, wxID_ANY,
-            _L("Send to Additv &Farm") + dots + "\tCtrl+Shift+U",
-            _L("Upload G-code and create print jobs on the Additv farm"),
-            [this](wxCommandEvent&) { open_additv_dialog(); },
-            "", nullptr,
-            [this]() { return m_plater != nullptr; }, this);
 
         fileMenu->AppendSeparator();
 
@@ -1911,20 +1913,21 @@ void MainFrame::open_additv_dialog()
 {
     using namespace Slic3r::GUI::Additv;
 
+    if (!AdditvConfig::is_logged_in()) {
+        wxMessageBox(_L("Please log in to Additv first (use the account menu in the top bar)."),
+                     _L("Additv"), wxOK | wxICON_INFORMATION, this);
+        return;
+    }
+
     AdditvDialog dlg(this);
 
     // Pre-populate from the current plater state
     if (m_plater) {
-        // TODO: detect the last exported gcode path and call dlg.set_gcode_path()
-        // For now the user will see "(no file)" until we hook into the export flow.
-
-        // Get filament type from active preset
         const DynamicPrintConfig &cfg = wxGetApp().preset_bundle->filaments.get_edited_preset().config;
         auto *opt = cfg.opt<ConfigOptionStrings>("filament_type");
         if (opt && !opt->values.empty())
             dlg.set_filament_type_hint(opt->values.front());
 
-        // Get printer model from active preset
         const DynamicPrintConfig &pcfg = wxGetApp().preset_bundle->printers.get_edited_preset().config;
         auto *popt = pcfg.opt<ConfigOptionString>("printer_model");
         if (popt && !popt->value.empty())
@@ -1932,6 +1935,41 @@ void MainFrame::open_additv_dialog()
     }
 
     dlg.ShowModal();
+}
+
+void MainFrame::additv_toggle_login()
+{
+    using namespace Slic3r::GUI::Additv;
+
+    if (AdditvConfig::is_logged_in()) {
+        AdditvOAuth::logout();
+        m_bar_menus.UpdateAccountMenu();
+        update_topbars();
+        return;
+    }
+
+    // Run OAuth login in background thread
+    std::thread([this]() {
+        auto result = Slic3r::GUI::Additv::AdditvOAuth::login();
+
+        wxTheApp->CallAfter([this, result]() {
+            if (result.success) {
+                Slic3r::GUI::Additv::AdditvConfig::set_access_token(result.access_token);
+                Slic3r::GUI::Additv::AdditvConfig::set_refresh_token(result.refresh_token);
+
+                Slic3r::GUI::Additv::UserInfo user;
+                std::string err;
+                if (Slic3r::GUI::Additv::AdditvClient::get_me(user, err))
+                    Slic3r::GUI::Additv::AdditvConfig::set_user_email(user.email);
+            } else {
+                wxMessageBox(
+                    wxString::Format(_L("Additv login failed: %s"), result.error),
+                    _L("Additv"), wxOK | wxICON_ERROR, this);
+            }
+            m_bar_menus.UpdateAccountMenu();
+            update_topbars();
+        });
+    }).detach();
 }
 
 void MainFrame::repair_stl()

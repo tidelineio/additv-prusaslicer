@@ -21,6 +21,8 @@ private:
     // Prusa Account menu items
     wxMenuItem*             m_login_item        { nullptr };
     wxMenuItem*             m_hide_login_item   { nullptr };
+    // Additv account menu item
+    wxMenuItem*             m_additv_login_item { nullptr };
 
     TopBarItemsCtrl*        m_popup_ctrl        { nullptr };
 
@@ -31,6 +33,9 @@ private:
     std::function<void()>           m_cb_act_with_user_account      { nullptr };
     std::function<void()>           m_cb_hide_user_account          { nullptr };
     std::function<UserAccountInfo()>m_cb_get_user_account_info      { nullptr };
+
+    std::function<void()>           m_cb_additv_login               { nullptr };
+    std::function<bool()>           m_cb_additv_is_logged           { nullptr };
 
 public:
     wxMenu          main;
@@ -75,6 +80,13 @@ public:
         m_cb_act_with_user_account   = cb_act_with_user_account;
         m_cb_hide_user_account       = cb_hide_user_account;
         m_cb_get_user_account_info   = cb_get_user_account_info;
+    }
+
+    void set_additv_callbacks(std::function<void()> cb_login,
+                              std::function<bool()> cb_is_logged)
+    {
+        m_cb_additv_login     = cb_login;
+        m_cb_additv_is_logged = cb_is_logged;
     }
 
 };

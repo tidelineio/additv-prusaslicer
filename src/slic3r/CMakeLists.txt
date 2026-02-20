@@ -25,6 +25,8 @@ set(SLIC3R_GUI_SOURCES
     GUI/Additv/AdditvDialog.hpp
     GUI/Additv/AdditvOAuth.cpp
     GUI/Additv/AdditvOAuth.hpp
+    GUI/Additv/AdditvPanel.cpp
+    GUI/Additv/AdditvPanel.hpp
     GUI/ArrangeSettingsDialogImgui.hpp
     GUI/ArrangeSettingsDialogImgui.cpp
     GUI/UserAccountCommunication.cpp

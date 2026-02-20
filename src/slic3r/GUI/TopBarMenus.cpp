@@ -86,6 +86,9 @@ void TopBarMenus::CreateAccountMenu()
     m_login_item = append_menu_item(&account, wxID_ANY, "", "",
         [this](wxCommandEvent&) { if (m_cb_act_with_user_account) m_cb_act_with_user_account(); }, "login");
 
+    m_additv_login_item = append_menu_item(&account, wxID_ANY, "", "",
+        [this](wxCommandEvent&) { if (m_cb_additv_login) m_cb_additv_login(); });
+
     m_hide_login_item = append_menu_item(&account, wxID_ANY, _L("Hide \"Log in\" button"), "",
         [this](wxCommandEvent&) { if (m_cb_hide_user_account) m_cb_hide_user_account(); });
 }
@@ -98,8 +101,14 @@ void TopBarMenus::UpdateAccountMenu()
     if (is_logged)
         RemoveHideLoginItem();
     if (m_login_item) {
-        m_login_item->SetItemLabel(is_logged ? _L("Log out") : _L("Log in"));
+        m_login_item->SetItemLabel(is_logged ? _L("Log out of Printables") : _L("Log in to Printables"));
         set_menu_item_bitmap(m_login_item, is_logged ? "logout" : "login");
+    }
+
+    // Additv login state
+    bool additv_logged = m_cb_additv_is_logged ? m_cb_additv_is_logged() : false;
+    if (m_additv_login_item) {
+        m_additv_login_item->SetItemLabel(additv_logged ? _L("Log out of Additv") : _L("Log in to Additv"));
     }
 }
 
