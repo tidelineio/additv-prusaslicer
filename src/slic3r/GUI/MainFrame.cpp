@@ -1972,7 +1972,7 @@ void MainFrame::additv_toggle_login()
     if (AdditvConfig::is_logged_in()) {
         AdditvOAuth::logout();
         m_bar_menus.UpdateAccountMenu();
-        update_topbars();
+        refresh_account_menu(true);
         return;
     }
 
@@ -1991,7 +1991,7 @@ void MainFrame::additv_toggle_login()
                     _L("Additv"), wxOK | wxICON_ERROR, this);
             }
             m_bar_menus.UpdateAccountMenu();
-            update_topbars();
+            refresh_account_menu(true);
         });
     }).detach();
 }
@@ -2058,7 +2058,7 @@ void MainFrame::additv_validate_session()
     }
 
     m_bar_menus.UpdateAccountMenu();
-    update_topbars();
+    refresh_account_menu(true);
 }
 
 void MainFrame::repair_stl()

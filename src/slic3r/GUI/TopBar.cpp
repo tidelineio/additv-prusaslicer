@@ -1,5 +1,6 @@
 #include "TopBar.hpp"
 #include "TopBarMenus.hpp"
+#include "Additv/AdditvConfig.hpp"
 
 #include "GUI_App.hpp"
 #include "Search.hpp"
@@ -216,8 +217,10 @@ void TopBarItemsCtrl::UpdateAccountButton(bool avatar/* = false*/)
     wxString user_name;
     if (user_account.is_logged)
         user_name = from_u8(user_account.user_name);
-    else if (m_menus && m_menus->is_additv_logged())
-        user_name = _L("Additv");
+    else if (m_menus && m_menus->is_additv_logged()) {
+        std::string email = Slic3r::GUI::Additv::AdditvConfig::get_user_email();
+        user_name = email.empty() ? _L("Additv") : from_u8(email);
+    }
     else
         user_name = _L("Log in");
 
