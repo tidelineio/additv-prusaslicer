@@ -73,6 +73,12 @@ void AdditvDialog::set_gcode_path(const std::string &path)
     }
 }
 
+void AdditvDialog::set_gcode_name(const std::string &name)
+{
+    if (m_name_input)
+        m_name_input->SetValue(name);
+}
+
 void AdditvDialog::set_filament_type_hint(const std::string &type)
 {
     m_filament_type_hint = type;
@@ -114,6 +120,13 @@ void AdditvDialog::build_ui()
 
     // --- GCode info ---
     auto *gcode_box = new wxStaticBoxSizer(wxVERTICAL, this, _L("GCode"));
+
+    auto *name_row = new wxBoxSizer(wxHORIZONTAL);
+    name_row->Add(new wxStaticText(this, wxID_ANY, _L("Name:")),
+                  0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 5);
+    m_name_input = new wxTextCtrl(this, wxID_ANY, "");
+    name_row->Add(m_name_input, 1, wxEXPAND);
+    gcode_box->Add(name_row, 0, wxEXPAND | wxALL, 5);
 
     auto add_info_row = [&](const wxString &label, wxStaticText *&out) {
         auto *row = new wxBoxSizer(wxHORIZONTAL);
@@ -332,14 +345,16 @@ void AdditvDialog::on_send(wxCommandEvent & /*evt*/)
     m_progress_bar->SetValue(0);
     Layout();
 
-    std::thread([this, filament_id, filament_type, quantity, order_id]() {
+    std::string upload_name = m_name_input->GetValue().ToStdString();
+
+    std::thread([this, filament_id, filament_type, quantity, order_id, upload_name]() {
         std::string  error;
         UploadResult upload_result;
 
         // 1. Upload gcode
         bool ok = AdditvClient::upload_gcode(
-            m_gcode_path, m_printer_model, filament_type, m_estimated_time,
-            upload_result, error,
+            m_gcode_path, upload_name, m_printer_model, filament_type,
+            m_estimated_time, upload_result, error,
             [this](float progress) {
                 wxTheApp->CallAfter([this, progress]() {
                     m_progress_bar->SetValue(

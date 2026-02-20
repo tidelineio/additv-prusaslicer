@@ -255,6 +255,7 @@ bool AdditvClient::get_orders(std::vector<OrderInfo> &out,
 // ---------------------------------------------------------------------------
 
 bool AdditvClient::upload_gcode(const std::string              &file_path,
+                                 const std::string              &upload_name,
                                  const std::string              &printer_model,
                                  const std::string              &filament_type,
                                  int                             estimated_time_seconds,
@@ -273,9 +274,13 @@ bool AdditvClient::upload_gcode(const std::string              &file_path,
     unsigned     resp_status = 0;
 
     auto http = Http::post(build_url("/upload"));
-    http.header("Authorization", auth_header())
-        .form_add_file("file", file_path)
-        .form_add("metadata", meta.str());
+    http.header("Authorization", auth_header());
+    // Use custom upload name if provided, otherwise local filename
+    if (!upload_name.empty())
+        http.form_add_file("file", file_path, upload_name);
+    else
+        http.form_add_file("file", file_path);
+    http.form_add("metadata", meta.str());
 
     if (progress_fn) {
         http.on_progress([&progress_fn](Http::Progress p, bool & /*cancel*/) {
@@ -297,7 +302,7 @@ bool AdditvClient::upload_gcode(const std::string              &file_path,
         .perform_sync();
 
     if (try_refresh_on_401(resp_status, error))
-        return upload_gcode(file_path, printer_model, filament_type,
+        return upload_gcode(file_path, upload_name, printer_model, filament_type,
                             estimated_time_seconds, out, error, progress_fn);
 
     if (resp_status != 201) {

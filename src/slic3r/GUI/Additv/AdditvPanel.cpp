@@ -393,7 +393,7 @@ void AdditvPanel::on_send(wxCommandEvent & /*evt*/)
         UploadResult upload_result;
 
         bool ok = AdditvClient::upload_gcode(
-            m_gcode_path, m_printer_model, filament_type, m_estimated_time,
+            m_gcode_path, "", m_printer_model, filament_type, m_estimated_time,
             upload_result, error,
             [this](float progress) {
                 wxTheApp->CallAfter([this, progress]() {

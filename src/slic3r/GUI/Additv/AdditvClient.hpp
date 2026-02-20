@@ -55,7 +55,9 @@ public:
                            std::string            &error);
 
     // Upload gcode file (with optional progress callback)
+    // upload_name: filename to use on the server (defaults to local filename if empty)
     static bool upload_gcode(const std::string              &file_path,
+                             const std::string              &upload_name,
                              const std::string              &printer_model,
                              const std::string              &filament_type,
                              int                             estimated_time_seconds,

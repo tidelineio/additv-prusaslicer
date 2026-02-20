@@ -1928,6 +1928,13 @@ void MainFrame::open_additv_dialog()
         if (!gcode_path.empty())
             dlg.set_gcode_path(gcode_path);
 
+        // Default name from project filename (e.g., "Shape-Cylinder.gcode")
+        wxString project = m_plater->get_project_filename(".gcode");
+        if (!project.empty()) {
+            wxFileName fn(project);
+            dlg.set_gcode_name(fn.GetFullName().ToStdString());
+        }
+
         // Get filament type from active preset
         const DynamicPrintConfig &cfg = wxGetApp().preset_bundle->filaments.get_edited_preset().config;
         auto *opt = cfg.opt<ConfigOptionStrings>("filament_type");

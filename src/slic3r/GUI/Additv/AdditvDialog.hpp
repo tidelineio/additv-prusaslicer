@@ -9,6 +9,7 @@
 #include <wx/gauge.h>
 #include <wx/spinctrl.h>
 #include <wx/stattext.h>
+#include <wx/textctrl.h>
 
 #include <string>
 #include <vector>
@@ -21,6 +22,7 @@ public:
 
     // Call these before ShowModal() to pre-populate the dialog.
     void set_gcode_path(const std::string &path);
+    void set_gcode_name(const std::string &name);
     void set_filament_type_hint(const std::string &type);
     void set_printer_model(const std::string &model);
     void set_estimated_time(int seconds);
@@ -44,6 +46,7 @@ private:
     wxButton     *m_logout_btn{nullptr};
 
     // GCode info
+    wxTextCtrl   *m_name_input{nullptr};
     wxStaticText *m_file_label{nullptr};
     wxStaticText *m_size_label{nullptr};
     wxStaticText *m_time_label{nullptr};
