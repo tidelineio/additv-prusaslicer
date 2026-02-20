@@ -1923,11 +1923,13 @@ void MainFrame::open_additv_dialog()
 
     // Pre-populate from the current plater state
     if (m_plater) {
+        // Get filament type from active preset
         const DynamicPrintConfig &cfg = wxGetApp().preset_bundle->filaments.get_edited_preset().config;
         auto *opt = cfg.opt<ConfigOptionStrings>("filament_type");
         if (opt && !opt->values.empty())
             dlg.set_filament_type_hint(opt->values.front());
 
+        // Get printer model from active preset
         const DynamicPrintConfig &pcfg = wxGetApp().preset_bundle->printers.get_edited_preset().config;
         auto *popt = pcfg.opt<ConfigOptionString>("printer_model");
         if (popt && !popt->value.empty())

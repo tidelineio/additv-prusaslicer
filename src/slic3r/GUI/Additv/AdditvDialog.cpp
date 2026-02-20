@@ -47,7 +47,7 @@ std::string AdditvDialog::format_size(uintmax_t bytes)
 // ---------------------------------------------------------------------------
 
 AdditvDialog::AdditvDialog(wxWindow *parent)
-    : wxDialog(parent, wxID_ANY, _L("Send to Additv Farm"),
+    : wxDialog(parent, wxID_ANY, _L("Send to Additv"),
                wxDefaultPosition, wxSize(460, 480),
                wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER)
 {
@@ -160,7 +160,7 @@ void AdditvDialog::build_ui()
     auto *btn_sizer = new wxBoxSizer(wxHORIZONTAL);
     btn_sizer->AddStretchSpacer();
     auto *cancel_btn = new wxButton(this, wxID_CANCEL, _L("Cancel"));
-    m_send_btn = new wxButton(this, wxID_ANY, _L("Send to Farm"));
+    m_send_btn = new wxButton(this, wxID_ANY, _L("Send"));
     m_send_btn->SetDefault();
     btn_sizer->Add(cancel_btn, 0, wxRIGHT, 5);
     btn_sizer->Add(m_send_btn, 0);
@@ -213,7 +213,7 @@ void AdditvDialog::enable_form(bool enable)
     m_filament_choice->Enable(enable);
     m_quantity_spin->Enable(enable);
     m_order_choice->Enable(enable);
-    m_send_btn->Enable(enable && !m_gcode_path.empty());
+    m_send_btn->Enable(enable);
 }
 
 void AdditvDialog::populate_dropdowns()
@@ -298,7 +298,14 @@ void AdditvDialog::on_logout(wxCommandEvent & /*evt*/)
 
 void AdditvDialog::on_send(wxCommandEvent & /*evt*/)
 {
-    if (m_gcode_path.empty()) return;
+    // If no gcode path set, prompt user to select a file
+    if (m_gcode_path.empty()) {
+        wxFileDialog dlg(this, _L("Select G-code file to upload"),
+                         "", "", "G-code files (*.gcode;*.bgcode)|*.gcode;*.bgcode",
+                         wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+        if (dlg.ShowModal() != wxID_OK) return;
+        set_gcode_path(dlg.GetPath().ToStdString());
+    }
 
     int sel = m_filament_choice->GetSelection();
     if (sel < 0 || sel >= static_cast<int>(m_filaments.size())) {
