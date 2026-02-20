@@ -52,7 +52,8 @@ AdditvDialog::AdditvDialog(wxWindow *parent)
                wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER)
 {
     build_ui();
-    update_login_state();
+    populate_dropdowns();
+    enable_form(true);
 }
 
 // ---------------------------------------------------------------------------
@@ -103,20 +104,6 @@ void AdditvDialog::set_estimated_time(int seconds)
 void AdditvDialog::build_ui()
 {
     auto *main_sizer = new wxBoxSizer(wxVERTICAL);
-
-    // --- Connection ---
-    auto *conn_box = new wxStaticBoxSizer(wxVERTICAL, this, _L("Connection"));
-    auto *conn_row = new wxBoxSizer(wxHORIZONTAL);
-
-    m_status_label = new wxStaticText(this, wxID_ANY, _L("Not connected"));
-    m_login_btn    = new wxButton(this, wxID_ANY, _L("Login to Additv"));
-    m_logout_btn   = new wxButton(this, wxID_ANY, _L("Logout"));
-
-    conn_row->Add(m_status_label, 1, wxALIGN_CENTER_VERTICAL | wxRIGHT, 10);
-    conn_row->Add(m_login_btn, 0, wxRIGHT, 5);
-    conn_row->Add(m_logout_btn, 0);
-    conn_box->Add(conn_row, 0, wxEXPAND | wxALL, 5);
-    main_sizer->Add(conn_box, 0, wxEXPAND | wxALL, 10);
 
     // --- GCode info ---
     auto *gcode_box = new wxStaticBoxSizer(wxVERTICAL, this, _L("GCode"));
@@ -190,36 +177,12 @@ void AdditvDialog::build_ui()
     SetSizerAndFit(main_sizer);
 
     // Events
-    m_login_btn->Bind(wxEVT_BUTTON, &AdditvDialog::on_login, this);
-    m_logout_btn->Bind(wxEVT_BUTTON, &AdditvDialog::on_logout, this);
     m_send_btn->Bind(wxEVT_BUTTON, &AdditvDialog::on_send, this);
 }
 
 // ---------------------------------------------------------------------------
 // State management
 // ---------------------------------------------------------------------------
-
-void AdditvDialog::update_login_state()
-{
-    bool logged_in = AdditvConfig::is_logged_in();
-    std::string email = AdditvConfig::get_user_email();
-
-    if (logged_in && !email.empty())
-        m_status_label->SetLabel(wxString::Format("Connected as %s", email));
-    else if (logged_in)
-        m_status_label->SetLabel(_L("Connected"));
-    else
-        m_status_label->SetLabel(_L("Not connected"));
-
-    m_login_btn->Show(!logged_in);
-    m_logout_btn->Show(logged_in);
-    enable_form(logged_in);
-
-    if (logged_in)
-        populate_dropdowns();
-
-    Layout();
-}
 
 void AdditvDialog::enable_form(bool enable)
 {
@@ -270,44 +233,6 @@ void AdditvDialog::populate_dropdowns()
 // ---------------------------------------------------------------------------
 // Event handlers
 // ---------------------------------------------------------------------------
-
-void AdditvDialog::on_login(wxCommandEvent & /*evt*/)
-{
-    m_login_btn->Disable();
-    m_status_label->SetLabel(_L("Opening browser for login..."));
-    Layout();
-
-    // Run OAuth flow in a background thread to keep UI responsive
-    std::thread([this]() {
-        auto result = AdditvOAuth::login();
-
-        // Dispatch back to the GUI thread
-        wxTheApp->CallAfter([this, result]() {
-            if (result.success) {
-                AdditvConfig::set_access_token(result.access_token);
-                AdditvConfig::set_refresh_token(result.refresh_token);
-
-                // Fetch user info
-                UserInfo user;
-                std::string err;
-                if (AdditvClient::get_me(user, err))
-                    AdditvConfig::set_user_email(user.email);
-            } else {
-                wxMessageBox(
-                    wxString::Format(_L("Login failed: %s"), result.error),
-                    _L("Additv Login"), wxOK | wxICON_ERROR, this);
-            }
-            m_login_btn->Enable();
-            update_login_state();
-        });
-    }).detach();
-}
-
-void AdditvDialog::on_logout(wxCommandEvent & /*evt*/)
-{
-    AdditvOAuth::logout();
-    update_login_state();
-}
 
 void AdditvDialog::on_send(wxCommandEvent & /*evt*/)
 {

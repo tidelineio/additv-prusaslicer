@@ -29,21 +29,13 @@ public:
 
 private:
     void build_ui();
-    void update_login_state();
     void populate_dropdowns();
     void enable_form(bool enable);
 
-    void on_login(wxCommandEvent &evt);
-    void on_logout(wxCommandEvent &evt);
     void on_send(wxCommandEvent &evt);
 
     static std::string format_time(int seconds);
     static std::string format_size(uintmax_t bytes);
-
-    // Connection
-    wxStaticText *m_status_label{nullptr};
-    wxButton     *m_login_btn{nullptr};
-    wxButton     *m_logout_btn{nullptr};
 
     // GCode info
     wxTextCtrl   *m_name_input{nullptr};
