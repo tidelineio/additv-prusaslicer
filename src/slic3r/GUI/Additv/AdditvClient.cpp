@@ -66,15 +66,21 @@ bool AdditvClient::refresh_access_token(std::string &error)
     std::string base = AdditvConfig::get_server_url();
     if (!base.empty() && base.back() == '/')
         base.pop_back();
-    std::string url = base + "/auth/v1/token?grant_type=refresh_token";
+    std::string url = base + "/auth/v1/oauth/token";
+    std::string client_id     = AdditvConfig::get_client_id();
+    std::string client_secret = AdditvConfig::get_client_secret();
 
-    std::string body_str = "{\"refresh_token\":\"" + refresh + "\"}";
+    std::string body_str =
+        "grant_type=refresh_token"
+        "&refresh_token=" + Http::url_encode(refresh) +
+        "&client_id="     + client_id;
 
     std::string  resp_body;
     unsigned     resp_status = 0;
 
     Http::post(url)
-        .header("Content-Type", "application/json")
+        .header("Content-Type", "application/x-www-form-urlencoded")
+        .auth_basic(client_id, client_secret)
         .set_post_body(body_str)
         .on_complete([&](std::string body, unsigned status) {
             resp_body   = std::move(body);
