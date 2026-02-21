@@ -72,6 +72,14 @@ jobs:
             locales m4 patchelf pkg-config texinfo unzip wget zlib1g-dev
           sudo locale-gen en_US.UTF-8
 
+      - name: Pre-download unreliable deps
+        if: steps.cache-deps.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p deps/build/downloads/GMP
+          curl -sL --retry 3 --retry-delay 5 \
+            -o deps/build/downloads/GMP/gmp-6.2.1.tar.bz2 \
+            "https://ftp.gnu.org/gnu/gmp/gmp-6.2.1.tar.bz2"
+
       - name: Build deps
         if: steps.cache-deps.outputs.cache-hit != 'true'
         env:
@@ -80,7 +88,7 @@ jobs:
         run: |
           mkdir -p deps/build && cd deps/build
           cmake .. -DDEP_WX_GTK3=ON
-          make -j$(nproc) || make -j$(nproc)
+          make -j$(nproc)
 
       - name: Build PrusaSlicer
         run: |
@@ -130,12 +138,24 @@ jobs:
           path: deps/build
           key: macos-arm64-deps-v1-${{ hashFiles('deps/CMakeLists.txt', 'deps/+*/**', 'cmake/modules/**') }}
 
+      - name: Pre-download unreliable deps
+        if: steps.cache-deps.outputs.cache-hit != 'true'
+        run: |
+          # gmplib.org frequently times out from GitHub runners.
+          # Pre-download from a GNU mirror into the expected cmake download dir.
+          mkdir -p deps/build/downloads/GMP
+          if [ ! -f deps/build/downloads/GMP/gmp-6.2.1.tar.bz2 ]; then
+            curl -sL --retry 3 --retry-delay 5 \
+              -o deps/build/downloads/GMP/gmp-6.2.1.tar.bz2 \
+              "https://ftp.gnu.org/gnu/gmp/gmp-6.2.1.tar.bz2"
+          fi
+
       - name: Build deps
         if: steps.cache-deps.outputs.cache-hit != 'true'
         run: |
           mkdir -p deps/build && cd deps/build
           cmake ..
-          make -j$(sysctl -n hw.ncpu) || make -j$(sysctl -n hw.ncpu)
+          make -j$(sysctl -n hw.ncpu)
 
       - name: Build PrusaSlicer
         run: |
@@ -174,6 +194,15 @@ jobs:
         with:
           path: deps/build
           key: windows-x64-deps-v1-${{ hashFiles('deps/CMakeLists.txt', 'deps/+*/**', 'cmake/modules/**') }}
+
+      - name: Pre-download unreliable deps
+        if: steps.cache-deps.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          mkdir -p deps/build/downloads/GMP
+          curl -sL --retry 3 --retry-delay 5 \
+            -o deps/build/downloads/GMP/gmp-6.2.1.tar.bz2 \
+            "https://ftp.gnu.org/gnu/gmp/gmp-6.2.1.tar.bz2"
 
       - name: Build deps
         if: steps.cache-deps.outputs.cache-hit != 'true'
