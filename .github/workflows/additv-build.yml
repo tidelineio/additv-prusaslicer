@@ -64,11 +64,16 @@ jobs:
       - name: Install system packages
         run: |
           sudo apt-get update
+          # Detect webkit package name (4.0 on 22.04, 4.1 on 24.04+)
+          WEBKIT_PKG="libwebkit2gtk-4.1-dev"
+          if apt-cache show libwebkit2gtk-4.0-dev >/dev/null 2>&1; then
+            WEBKIT_PKG="libwebkit2gtk-4.0-dev"
+          fi
           sudo apt-get install -y --no-install-recommends \
             autoconf automake build-essential cmake curl gettext git \
             libcurl4-openssl-dev libdbus-1-dev libegl-dev libgl-dev \
             libglu1-mesa-dev libgtk-3-dev libssl-dev libtool libudev-dev \
-            libwayland-dev libwebkit2gtk-4.0-dev libx11-dev libxkbcommon-dev \
+            libwayland-dev "$WEBKIT_PKG" libx11-dev libxkbcommon-dev \
             locales m4 patchelf pkg-config texinfo unzip wget zlib1g-dev
           sudo locale-gen en_US.UTF-8
 
@@ -219,7 +224,7 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake .. -DCMAKE_PREFIX_PATH="%CD%\..\deps\build\destdir\usr\local" -DSLIC3R_STATIC=ON -DSLIC3R_BUILD_TESTS=OFF -DOPENVDB_FIND_MODULE_PATH="%CD%\..\deps\build\destdir\usr\local\lib\cmake\OpenVDB"
+          cmake .. -DCMAKE_PREFIX_PATH="%CD%\..\deps\build\destdir\usr\local" -DSLIC3R_STATIC=ON -DSLIC3R_BUILD_TESTS=OFF -DOPENVDB_FIND_MODULE_PATH="%CD%\..\deps\build\destdir\usr\local\lib\cmake\OpenVDB" -DPSAPI_LIB=psapi
           cmake --build . --config Release --target PrusaSlicer
 
       - name: Package
