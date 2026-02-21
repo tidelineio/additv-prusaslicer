@@ -41,6 +41,10 @@ private:
     static constexpr const char *DEFAULT_CLIENT_ID =
         "dd1952be-4737-4761-90c1-cb8a40c7292d";
     static constexpr const char *KEY_CLIENT_SECRET = "client_secret";
+    // NOTE: Embedding client_secret in a desktop app is industry-standard
+    // (RFC 8252). It cannot grant access alone — users must still
+    // authenticate via OAuth. PKCE protects the flow. Same pattern as
+    // Google, Slack, and other desktop OAuth clients.
     static constexpr const char *DEFAULT_CLIENT_SECRET =
         "CY3RqfAIDU-34k4WBamH4H8-8UUloUfXW5za1B4Bej8";
     static constexpr const char *KEY_ACCESS = "access_token";
