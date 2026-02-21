@@ -12,6 +12,10 @@
 #include <sstream>
 #include <thread>
 
+#ifdef _WIN32
+#include <shellapi.h>
+#endif
+
 namespace Slic3r { namespace GUI { namespace Additv {
 
 // ---------------------------------------------------------------------------

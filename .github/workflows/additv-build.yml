@@ -214,18 +214,6 @@ jobs:
           cmake .. -DDEP_DEBUG=OFF
           cmake --build . --config Release
 
-      - name: Debug deps structure
-        shell: bash
-        run: |
-          echo "=== OpenVDB files ==="
-          find deps/build/destdir -name "*openvdb*" -o -name "*OpenVDB*" 2>/dev/null || true
-          echo "=== cmake config files ==="
-          find deps/build/destdir -name "*.cmake" 2>/dev/null | head -40 || true
-          echo "=== lib directory ==="
-          ls -la deps/build/destdir/usr/local/lib/ 2>/dev/null || true
-          echo "=== cmake version ==="
-          cmake --version
-
       - name: Build PrusaSlicer
         shell: cmd
         run: |
