@@ -105,7 +105,7 @@ jobs:
         run: |
           VERSION="${{ needs.version.outputs.version }}"
           mkdir -p dist
-          cp build/src/PrusaSlicer dist/AdditvSlicer-${VERSION}-linux-x86_64
+          cp build/src/prusa-slicer dist/AdditvSlicer-${VERSION}-linux-x86_64
           chmod +x dist/AdditvSlicer-${VERSION}-linux-x86_64
           tar czf dist/AdditvSlicer-${VERSION}-linux-x86_64.tar.gz \
             -C dist AdditvSlicer-${VERSION}-linux-x86_64
