@@ -224,7 +224,7 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake .. -DCMAKE_PREFIX_PATH="%CD%\..\deps\build\destdir\usr\local" -DSLIC3R_STATIC=ON -DSLIC3R_BUILD_TESTS=OFF -DOPENVDB_FIND_MODULE_PATH="%CD%\..\deps\build\destdir\usr\local\lib\cmake\OpenVDB" -DPSAPI_LIB=psapi
+          cmake .. -DCMAKE_PREFIX_PATH="%CD%\..\deps\build\destdir\usr\local" -DSLIC3R_STATIC=ON -DSLIC3R_BUILD_TESTS=OFF -DOPENVDB_FIND_MODULE_PATH="%CD%\..\deps\build\destdir\usr\local\lib\cmake\OpenVDB" -DPSAPI_LIB=psapi.lib
           cmake --build . --config Release --target PrusaSlicer
 
       - name: Package
