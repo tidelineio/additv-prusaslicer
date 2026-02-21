@@ -6,22 +6,18 @@ on:
   pull_request:
     branches: [additv/main]
 
-# Cancel in-progress runs for the same branch/PR
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 env:
-  # Base version from PrusaSlicer's version.inc
   UPSTREAM_VERSION: '2.9.4'
 
 jobs:
-  # Compute the full version string
   version:
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.version.outputs.version }}
-      additv_iteration: ${{ steps.version.outputs.additv_iteration }}
       is_release: ${{ steps.version.outputs.is_release }}
     steps:
       - uses: actions/checkout@v4
@@ -32,10 +28,8 @@ jobs:
       - name: Compute version
         id: version
         run: |
-          # Find the latest additv tag for this upstream version
           LATEST_TAG=$(git tag -l "v${UPSTREAM_VERSION}-additv.*" --sort=-v:refname | head -1)
           if [ -n "$LATEST_TAG" ]; then
-            # Extract iteration number: v2.9.4-additv.3 -> 3
             CURRENT_ITER=$(echo "$LATEST_TAG" | sed 's/.*-additv\.//')
             NEXT_ITER=$((CURRENT_ITER + 1))
           else
@@ -51,7 +45,6 @@ jobs:
           fi
 
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "additv_iteration=$NEXT_ITER" >> "$GITHUB_OUTPUT"
           echo "is_release=$IS_RELEASE" >> "$GITHUB_OUTPUT"
           echo "Version: $VERSION (release: $IS_RELEASE)"
 
@@ -60,15 +53,13 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: false
 
       - name: Cache deps
+        id: cache-deps
         uses: actions/cache@v4
         with:
-          path: deps/build/destdir
-          key: linux-deps-${{ hashFiles('deps/CMakeLists.txt', 'deps/+*/**') }}
-          restore-keys: linux-deps-
+          path: deps/build
+          key: linux-deps-v1-${{ hashFiles('deps/CMakeLists.txt', 'deps/+*/**', 'cmake/modules/**') }}
 
       - name: Install system packages
         run: |
@@ -89,7 +80,7 @@ jobs:
         run: |
           mkdir -p deps/build && cd deps/build
           cmake .. -DDEP_WX_GTK3=ON
-          make -j$(nproc)
+          make -j$(nproc) || make -j$(nproc)
 
       - name: Build PrusaSlicer
         run: |
@@ -102,13 +93,12 @@ jobs:
             -DSLIC3R_BUILD_TESTS=OFF
           make -j$(nproc)
 
-      - name: Package AppImage
+      - name: Package
         run: |
           VERSION="${{ needs.version.outputs.version }}"
           mkdir -p dist
           cp build/src/PrusaSlicer dist/AdditvSlicer-${VERSION}-linux-x86_64
           chmod +x dist/AdditvSlicer-${VERSION}-linux-x86_64
-          # TODO: proper AppImage packaging with linuxdeploy
           tar czf dist/AdditvSlicer-${VERSION}-linux-x86_64.tar.gz \
             -C dist AdditvSlicer-${VERSION}-linux-x86_64
 
@@ -120,11 +110,9 @@ jobs:
 
   build-macos:
     needs: version
-    runs-on: macos-14  # Apple Silicon
+    runs-on: macos-14
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: false
 
       - name: Install system packages
         run: brew install automake autoconf gettext libtool texinfo m4 zlib
@@ -136,18 +124,18 @@ jobs:
           echo "/tmp/cmake-3.27.9-macos-universal/CMake.app/Contents/bin" >> $GITHUB_PATH
 
       - name: Cache deps
+        id: cache-deps
         uses: actions/cache@v4
         with:
-          path: deps/build/destdir
-          key: macos-arm64-deps-${{ hashFiles('deps/CMakeLists.txt', 'deps/+*/**') }}
-          restore-keys: macos-arm64-deps-
+          path: deps/build
+          key: macos-arm64-deps-v1-${{ hashFiles('deps/CMakeLists.txt', 'deps/+*/**', 'cmake/modules/**') }}
 
       - name: Build deps
         if: steps.cache-deps.outputs.cache-hit != 'true'
         run: |
           mkdir -p deps/build && cd deps/build
           cmake ..
-          make -j$(sysctl -n hw.ncpu)
+          make -j$(sysctl -n hw.ncpu) || make -j$(sysctl -n hw.ncpu)
 
       - name: Build PrusaSlicer
         run: |
@@ -159,11 +147,10 @@ jobs:
             -DSLIC3R_BUILD_TESTS=OFF
           make -j$(sysctl -n hw.ncpu)
 
-      - name: Package DMG
+      - name: Package
         run: |
           VERSION="${{ needs.version.outputs.version }}"
           mkdir -p dist
-          # For now, tar the binary. TODO: proper .app bundle + DMG
           cp build/src/PrusaSlicer dist/AdditvSlicer-${VERSION}-macos-arm64
           chmod +x dist/AdditvSlicer-${VERSION}-macos-arm64
           tar czf dist/AdditvSlicer-${VERSION}-macos-arm64.tar.gz \
@@ -180,15 +167,13 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: false
 
       - name: Cache deps
+        id: cache-deps
         uses: actions/cache@v4
         with:
-          path: deps/build/destdir
-          key: windows-x64-deps-${{ hashFiles('deps/CMakeLists.txt', 'deps/+*/**') }}
-          restore-keys: windows-x64-deps-
+          path: deps/build
+          key: windows-x64-deps-v1-${{ hashFiles('deps/CMakeLists.txt', 'deps/+*/**', 'cmake/modules/**') }}
 
       - name: Build deps
         if: steps.cache-deps.outputs.cache-hit != 'true'
