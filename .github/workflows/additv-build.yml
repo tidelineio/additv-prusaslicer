@@ -188,12 +188,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install CMake 3.27.9
+        shell: bash
+        run: |
+          curl -sL "https://github.com/Kitware/CMake/releases/download/v3.27.9/cmake-3.27.9-windows-x86_64.zip" \
+            -o /tmp/cmake.zip
+          unzip -q /tmp/cmake.zip -d /tmp
+          echo "/tmp/cmake-3.27.9-windows-x86_64/bin" >> $GITHUB_PATH
+
       - name: Cache deps
         id: cache-deps
         uses: actions/cache@v4
         with:
           path: deps/build
-          key: windows-x64-deps-v1-${{ hashFiles('deps/CMakeLists.txt', 'deps/+*/**', 'cmake/modules/**') }}
+          key: windows-x64-deps-v2-${{ hashFiles('deps/CMakeLists.txt', 'deps/+*/**', 'cmake/modules/**') }}
 
       - name: Pre-download unreliable deps
         if: steps.cache-deps.outputs.cache-hit != 'true'
@@ -219,7 +227,7 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake .. -DCMAKE_PREFIX_PATH="%CD%\..\deps\build\destdir\usr\local" -DSLIC3R_BUILD_TESTS=OFF
+          cmake .. -DCMAKE_PREFIX_PATH="%CD%\..\deps\build\destdir\usr\local" -DSLIC3R_STATIC=ON -DSLIC3R_BUILD_TESTS=OFF
           cmake --build . --config Release --target PrusaSlicer
 
       - name: Package
