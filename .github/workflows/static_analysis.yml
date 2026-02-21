@@ -1,14 +1,10 @@
+# Upstream PrusaSlicer workflow — disabled in Additv fork.
+# Use additv-build.yml instead.
 name: Run static analysis
-
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "0 0 * * *"
-
 jobs:
-  static_analysis_dev:
-    uses: Prusa-Development/PrusaSlicer-Actions/.github/workflows/static_analysis.yml@master
-    secrets: inherit
-    with:
-      branch: ms_dev
-      actions_branch: master
+  disabled:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "This workflow is disabled in the Additv fork. Use Additv Build instead."

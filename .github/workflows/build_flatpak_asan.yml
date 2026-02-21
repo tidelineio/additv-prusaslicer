@@ -1,16 +1,10 @@
+# Upstream PrusaSlicer workflow — disabled in Additv fork.
+# Use additv-build.yml instead.
 name: Build flatpak asan
-
 on:
-  push:
-    branches:
-      - master
   workflow_dispatch:
-
 jobs:
-  build_flatpak_asan:
-    uses: Prusa-Development/PrusaSlicer-Actions/.github/workflows/build_flatpak.yml@master
-    secrets: inherit
-    with:
-      with_asan: true
-      debug_symbols: true
-      actions_branch: master
+  disabled:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "This workflow is disabled in the Additv fork. Use Additv Build instead."

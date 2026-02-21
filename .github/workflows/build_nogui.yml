@@ -1,11 +1,10 @@
+# Upstream PrusaSlicer workflow — disabled in Additv fork.
+# Use additv-build.yml instead.
 name: Build without GUI
-
 on:
   workflow_dispatch:
-
 jobs:
-  build_nogui:
-    uses: Prusa-Development/PrusaSlicer-Actions/.github/workflows/build_nogui.yml@master
-    secrets: inherit
-    with:
-      actions_branch: master
+  disabled:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "This workflow is disabled in the Additv fork. Use Additv Build instead."
