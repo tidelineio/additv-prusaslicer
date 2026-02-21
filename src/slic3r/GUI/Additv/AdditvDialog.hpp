@@ -31,11 +31,16 @@ private:
     void build_ui();
     void populate_dropdowns();
     void enable_form(bool enable);
+    void show_success(int64_t gcode_id, int job_count);
 
     void on_send(wxCommandEvent &evt);
 
     static std::string format_time(int seconds);
     static std::string format_size(uintmax_t bytes);
+    static void open_url(const std::string &url);
+
+    // Form panel (hidden on success)
+    wxPanel *m_form_panel{nullptr};
 
     // GCode info
     wxTextCtrl   *m_name_input{nullptr};
@@ -54,6 +59,9 @@ private:
     // Progress
     wxGauge      *m_progress_bar{nullptr};
     wxStaticText *m_progress_label{nullptr};
+
+    // Success panel (shown after upload)
+    wxPanel *m_success_panel{nullptr};
 
     // Data
     std::string               m_gcode_path;
